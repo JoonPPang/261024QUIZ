@@ -1,0 +1,2098 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>미로 탈출 저작권 챔피언 — 퀴즈 챔피언</title>
+  <style>
+    /* ==========================================================================
+       CSS Reset & Global Variables
+       ========================================================================== */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :root {
+      --primary: #3b82f6;
+      --primary-dark: #1d4ed8;
+      --accent: #f59e0b;
+      --accent-dark: #d97706;
+      --success: #10b981;
+      --success-dark: #059669;
+      --danger: #ef4444;
+      --danger-dark: #dc2626;
+      --purple: #8b5cf6;
+      --bg-main: #0f172a;
+      --bg-card: #1e293b;
+      --bg-card-light: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border-color: #475569;
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --shadow-game: 0 6px 0 rgba(0, 0, 0, 0.35);
+      --shadow-btn: 0 4px 0 rgba(0, 0, 0, 0.3);
+      --font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Malgun Gothic', sans-serif;
+    }
+
+    body {
+      font-family: var(--font-family);
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      overflow-x: hidden;
+      touch-action: manipulation;
+      user-select: none;
+    }
+
+    /* Accessibility screen-reader only */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      border: 0;
+    }
+
+    /* 화면 전환 숨김 처리 */
+    .screen[hidden] {
+      display: none !important;
+    }
+
+    /* 메인 컨테이너 */
+    #app-container {
+      width: 100%;
+      max-width: 1020px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 12px 16px;
+      margin: 0 auto;
+    }
+
+    /* ==========================================================================
+       헤더 & 사운드 컨트롤
+       ========================================================================== */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: var(--bg-card);
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-md);
+      margin-bottom: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .brand-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #fbbf24;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: -0.5px;
+    }
+
+    .audio-btn {
+      background: var(--bg-card-light);
+      border: 2px solid var(--border-color);
+      color: var(--text-main);
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: var(--shadow-btn);
+      transition: transform 0.1s, background-color 0.2s;
+    }
+    .audio-btn:active {
+      transform: translateY(2px);
+      box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3);
+    }
+    .audio-btn.on {
+      background: #0284c7;
+      border-color: #38bdf8;
+    }
+
+    /* ==========================================================================
+       화면 1: 시작 화면 (Intro)
+       ========================================================================== */
+    #screen-intro {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 20px 10px;
+      animation: fadeIn 0.4s ease-out;
+    }
+
+    .hero-badge {
+      display: inline-block;
+      background: rgba(245, 158, 11, 0.2);
+      border: 1px solid var(--accent);
+      color: #fcd34d;
+      padding: 4px 16px;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .game-main-title {
+      font-size: clamp(1.8rem, 4.5vw, 2.6rem);
+      font-weight: 900;
+      line-height: 1.25;
+      margin-bottom: 8px;
+      text-shadow: 0 3px 6px rgba(0,0,0,0.4);
+      background: linear-gradient(135deg, #ffffff 30%, #fde047 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .game-sub-title {
+      font-size: 1rem;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+      max-width: 520px;
+      line-height: 1.5;
+    }
+
+    .mascot-hero-wrap {
+      width: 140px;
+      height: 140px;
+      margin-bottom: 20px;
+      animation: floatHero 3s ease-in-out infinite;
+    }
+
+    /* 반/번호 입력 카드 */
+    .login-card {
+      background: var(--bg-card);
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      width: 100%;
+      max-width: 440px;
+      box-shadow: var(--shadow-game);
+      margin-bottom: 16px;
+    }
+
+    .login-card h2 {
+      font-size: 1.15rem;
+      font-weight: 800;
+      margin-bottom: 16px;
+      color: #93c5fd;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+
+    .input-group {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+    }
+
+    .input-group label {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .input-field-wrap {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      background: #0f172a;
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 0 10px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .input-field-wrap:focus-within {
+      border-color: #60a5fa;
+      box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.25);
+    }
+    .input-field-wrap.error {
+      border-color: var(--danger);
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.25);
+    }
+
+    .num-input {
+      width: 100%;
+      height: 48px;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #ffffff;
+      font-size: 1.3rem;
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .unit-text {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      padding-left: 4px;
+    }
+
+    .error-msg {
+      min-height: 22px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #f87171;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+
+    .privacy-notice {
+      font-size: 0.78rem;
+      color: #64748b;
+      line-height: 1.4;
+      margin-top: 10px;
+    }
+
+    /* 게임 시작 큰 버튼 */
+    .btn-start-game {
+      width: 100%;
+      height: 56px;
+      background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+      border: none;
+      border-radius: var(--radius-md);
+      color: #ffffff;
+      font-size: 1.25rem;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 6px 0 #047857, 0 8px 16px rgba(0, 0, 0, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+    .btn-start-game:active {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 #047857;
+    }
+
+    /* 룰 요약 카드 */
+    .rules-card {
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px dashed var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 14px 18px;
+      max-width: 440px;
+      width: 100%;
+      text-align: left;
+      font-size: 0.85rem;
+      color: #cbd5e1;
+      line-height: 1.5;
+    }
+    .rules-card strong {
+      color: #fbbf24;
+    }
+
+    /* ==========================================================================
+       화면 2: 게임 HUD & 미로 보드 (Game Screen)
+       ========================================================================== */
+    #screen-game {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    /* 상단 게임 HUD */
+    .game-hud {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 8px;
+      background: var(--bg-card);
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      margin-bottom: 10px;
+      box-shadow: var(--shadow-btn);
+    }
+
+    .hud-chip {
+      background: #0f172a;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 6px 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .hud-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .hud-value {
+      font-size: 1.15rem;
+      font-weight: 900;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .hud-score { color: #f59e0b; }
+    .hud-combo {
+      color: #ec4899;
+      transition: transform 0.2s;
+    }
+    .hud-combo.active {
+      transform: scale(1.1);
+      color: #f43f5e;
+      text-shadow: 0 0 8px rgba(244, 63, 94, 0.6);
+    }
+    .hud-level { color: #38bdf8; }
+
+    /* 열쇠 진행률 바 */
+    .progress-bar-container {
+      width: 100%;
+      height: 8px;
+      background: #334155;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #3b82f6, #10b981);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    /* 미로 보드 컨테이너 */
+    .maze-container {
+      width: 100%;
+      position: relative;
+      background: #090d16;
+      border: 3px solid #334155;
+      border-radius: var(--radius-md);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      aspect-ratio: 15 / 11;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #maze-svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* 미로 하단 안내 & D-Pad 컨트롤 */
+    .game-controls-section {
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .control-tip {
+      font-size: 0.85rem;
+      color: #94a3b8;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .dpad-container {
+      display: grid;
+      grid-template-columns: repeat(3, 56px);
+      grid-template-rows: repeat(2, 52px);
+      gap: 6px;
+      justify-content: center;
+      margin-top: 2px;
+    }
+
+    .dpad-btn {
+      background: linear-gradient(180deg, #334155 0%, #1e293b 100%);
+      border: 2px solid #475569;
+      border-radius: var(--radius-sm);
+      color: #ffffff;
+      font-size: 1.4rem;
+      font-weight: 900;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--shadow-btn);
+      user-select: none;
+      transition: transform 0.08s, background-color 0.1s;
+    }
+    .dpad-btn:active {
+      transform: translateY(2px);
+      box-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
+      background: #0284c7;
+      border-color: #38bdf8;
+    }
+    .dpad-up { grid-column: 2; grid-row: 1; }
+    .dpad-left { grid-column: 1; grid-row: 2; }
+    .dpad-down { grid-column: 2; grid-row: 2; }
+    .dpad-right { grid-column: 3; grid-row: 2; }
+
+    /* ==========================================================================
+       화면 3: 관문 퀴즈 팝업 카드 (Modal)
+       ========================================================================== */
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 999;
+      animation: modalFadeIn 0.25s ease-out;
+    }
+
+    .modal-backdrop[hidden] {
+      display: none !important;
+    }
+
+    .quiz-card {
+      background: var(--bg-card);
+      border: 3px solid #3b82f6;
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 680px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 24px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .quiz-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 14px;
+      border-bottom: 2px solid var(--border-color);
+      margin-bottom: 16px;
+    }
+
+    .gate-badge {
+      background: linear-gradient(90deg, #f59e0b, #d97706);
+      color: #0f172a;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 0.95rem;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .quiz-stats-mini {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #93c5fd;
+    }
+
+    .question-title {
+      font-size: clamp(1.15rem, 2.5vw, 1.4rem);
+      font-weight: 800;
+      line-height: 1.5;
+      color: #ffffff;
+      margin-bottom: 20px;
+      word-break: keep-all;
+    }
+
+    /* 4지선다 보기 그리드: 데스크톱 2x2, 모바일 1열 */
+    .options-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    @media (max-width: 640px) {
+      .options-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .option-btn {
+      min-height: 64px;
+      padding: 12px 14px;
+      background: var(--bg-card-light);
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-md);
+      color: #ffffff;
+      font-size: 1rem;
+      font-weight: 700;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: var(--shadow-btn);
+      line-height: 1.4;
+      word-break: keep-all;
+      transition: transform 0.1s, border-color 0.2s, background-color 0.2s;
+    }
+    .option-btn:hover:not(:disabled) {
+      border-color: #60a5fa;
+      background: #3b4d66;
+    }
+    .option-btn:active:not(:disabled) {
+      transform: translateY(2px);
+      box-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
+    }
+    .option-btn:disabled {
+      cursor: default;
+    }
+
+    .option-tag {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+    .opt-a .option-tag { background: #3b82f6; color: #fff; }
+    .opt-b .option-tag { background: #10b981; color: #fff; }
+    .opt-c .option-tag { background: #f59e0b; color: #fff; }
+    .opt-d .option-tag { background: #8b5cf6; color: #fff; }
+
+    /* 정오답 선택 시 스타일 */
+    .option-btn.selected-correct {
+      background: #065f46 !important;
+      border-color: #34d399 !important;
+      color: #ffffff !important;
+    }
+    .option-btn.selected-wrong {
+      background: #991b1b !important;
+      border-color: #f87171 !important;
+      color: #ffffff !important;
+    }
+
+    /* 정오답 피드백 섹션 */
+    .quiz-feedback-box {
+      border-radius: var(--radius-md);
+      padding: 16px;
+      margin-top: 8px;
+      animation: popIn 0.25s ease-out;
+    }
+    .quiz-feedback-box.correct {
+      background: rgba(16, 185, 129, 0.15);
+      border: 2px solid var(--success);
+    }
+    .quiz-feedback-box.wrong {
+      background: rgba(239, 68, 68, 0.15);
+      border: 2px solid var(--danger);
+    }
+
+    .fb-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .fb-icon-wrap {
+      width: 48px;
+      height: 48px;
+      flex-shrink: 0;
+    }
+
+    .fb-title-wrap {
+      flex: 1;
+    }
+    .fb-title {
+      font-size: 1.25rem;
+      font-weight: 900;
+    }
+    .quiz-feedback-box.correct .fb-title { color: #34d399; }
+    .quiz-feedback-box.wrong .fb-title { color: #f87171; }
+
+    .fb-bonus-text {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #fbbf24;
+    }
+
+    .fb-desc {
+      font-size: 0.95rem;
+      color: #e2e8f0;
+      line-height: 1.5;
+      margin-bottom: 14px;
+      word-break: keep-all;
+    }
+
+    .btn-feedback-action {
+      width: 100%;
+      height: 50px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 1.1rem;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: var(--shadow-btn);
+      transition: transform 0.1s;
+    }
+    .btn-feedback-action:active {
+      transform: translateY(2px);
+    }
+    .btn-feedback-action.next {
+      background: #10b981;
+      color: #ffffff;
+    }
+    .btn-feedback-action.retry {
+      background: #ef4444;
+      color: #ffffff;
+    }
+
+    /* ==========================================================================
+       화면 4: 결과 화면 (Result)
+       ========================================================================== */
+    #screen-result {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 24px 12px;
+      animation: fadeIn 0.4s ease-out;
+    }
+
+    .result-card {
+      background: var(--bg-card);
+      border: 3px solid #f59e0b;
+      border-radius: var(--radius-lg);
+      padding: 28px 20px;
+      width: 100%;
+      max-width: 580px;
+      box-shadow: var(--shadow-game);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .trophy-wrap {
+      width: 120px;
+      height: 120px;
+      margin-bottom: 12px;
+      animation: bounceTrophy 1.5s infinite alternate ease-in-out;
+    }
+
+    .result-title {
+      font-size: clamp(1.6rem, 4vw, 2.2rem);
+      font-weight: 900;
+      color: #fde047;
+      margin-bottom: 6px;
+    }
+
+    .result-student-tag {
+      display: inline-block;
+      background: #0f172a;
+      border: 1px solid var(--border-color);
+      color: #93c5fd;
+      padding: 4px 14px;
+      border-radius: 999px;
+      font-size: 0.95rem;
+      font-weight: 800;
+      margin-bottom: 18px;
+    }
+
+    .stats-dashboard {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      width: 100%;
+      margin-bottom: 20px;
+    }
+
+    .stat-box {
+      background: #0f172a;
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .stat-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .stat-num {
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: #ffffff;
+    }
+    .stat-score { color: #f59e0b; }
+    .stat-accuracy { color: #10b981; }
+    .stat-combo { color: #ec4899; }
+    .stat-grade { color: #38bdf8; }
+
+    /* 네트워크 전송 상태 안내 */
+    .network-status-box {
+      font-size: 0.85rem;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 16px;
+      background: #1e293b;
+      color: #cbd5e1;
+      display: inline-block;
+    }
+    .network-status-box.success { color: #34d399; }
+    .network-status-box.error { color: #f87171; }
+
+    .result-btn-row {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+    }
+    @media (min-width: 480px) {
+      .result-btn-row {
+        flex-direction: row;
+      }
+    }
+
+    .btn-result-action {
+      flex: 1;
+      height: 52px;
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 1.05rem;
+      font-weight: 900;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: var(--shadow-btn);
+      transition: transform 0.1s;
+    }
+    .btn-result-action:active {
+      transform: translateY(2px);
+    }
+    .btn-review-wrong {
+      background: #3b82f6;
+      color: #ffffff;
+    }
+    .btn-restart-game {
+      background: #10b981;
+      color: #ffffff;
+    }
+
+    /* ==========================================================================
+       화면 5: 오답 복습 화면 (Review)
+       ========================================================================== */
+    #screen-review {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 16px 10px;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .review-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--border-color);
+    }
+    .review-title {
+      font-size: 1.4rem;
+      font-weight: 900;
+      color: #f87171;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-back-result {
+      background: var(--bg-card-light);
+      border: 2px solid var(--border-color);
+      color: #ffffff;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: var(--shadow-btn);
+    }
+
+    .review-cards-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .review-item {
+      background: var(--bg-card);
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      text-align: left;
+    }
+
+    .rev-q-num {
+      display: inline-block;
+      background: #ef4444;
+      color: #fff;
+      font-size: 0.8rem;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-bottom: 8px;
+    }
+
+    .rev-q-text {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 12px;
+      line-height: 1.45;
+    }
+
+    .rev-answers-box {
+      background: #0f172a;
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      margin-bottom: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 0.9rem;
+    }
+    .rev-user-ans {
+      color: #f87171;
+      font-weight: 700;
+    }
+    .rev-correct-ans {
+      color: #34d399;
+      font-weight: 800;
+    }
+
+    .rev-expl {
+      font-size: 0.85rem;
+      color: #cbd5e1;
+      line-height: 1.4;
+      background: rgba(59, 130, 246, 0.1);
+      border-left: 3px solid #3b82f6;
+      padding: 6px 10px;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    }
+
+    /* ==========================================================================
+       애니메이션
+       ========================================================================== */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes modalFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.92); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    @keyframes floatHero {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+    @keyframes bounceTrophy {
+      0% { transform: scale(0.96) rotate(-2deg); }
+      100% { transform: scale(1.04) rotate(2deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="app-container">
+    <!-- 상단 바: 브랜드 및 사운드 온/오프 -->
+    <header class="top-bar">
+      <div class="brand-title">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="10" fill="#f59e0b"/>
+          <path d="M12 4L14.5 9.5L20 10.2L16 14.2L17 20L12 17L7 20L8 14.2L4 10.2L9.5 9.5L12 4Z" fill="#ffffff"/>
+        </svg>
+        <span>퀴즈 챔피언 : 저작권 미로 탐험</span>
+      </div>
+      <button type="button" id="btn-sound-toggle" class="audio-btn" aria-label="효과음 켜기/끄기">
+        <span id="sound-icon">🔇</span>
+        <span id="sound-text">소리 끔</span>
+      </button>
+    </header>
+
+    <!-- ==========================================================================
+         화면 1: 시작 화면 (Intro)
+         ========================================================================== -->
+    <main id="screen-intro" class="screen">
+      <div class="hero-badge">초등학교 3~4학년 디지털 시민성</div>
+      <h1 class="game-main-title">미로 탈출 저작권 챔피언</h1>
+      <p class="game-sub-title">10개의 저작권 관문을 통과하고 황금 열쇠를 모아 미로를 탈출하세요!</p>
+
+      <!-- 탐험가 마스코트 SVG 일러스트 -->
+      <div class="mascot-hero-wrap">
+        <svg viewBox="0 0 120 120" width="100%" height="100%">
+          <!-- 챙 넓은 탐험가 모자 -->
+          <ellipse cx="60" cy="40" rx="46" ry="14" fill="#d97706"/>
+          <path d="M34 40 C34 18, 86 18, 86 40 Z" fill="#b45309"/>
+          <rect x="34" y="36" width="52" height="7" fill="#f59e0b"/>
+          <!-- 얼굴 -->
+          <circle cx="60" cy="62" r="28" fill="#fed7aa"/>
+          <!-- 볼터치 -->
+          <circle cx="44" cy="68" r="5" fill="#fca5a5" opacity="0.6"/>
+          <circle cx="76" cy="68" r="5" fill="#fca5a5" opacity="0.6"/>
+          <!-- 반짝이는 눈 -->
+          <ellipse cx="48" cy="60" rx="3.5" ry="5.5" fill="#1e293b"/>
+          <circle cx="46.5" cy="58" r="1.5" fill="#ffffff"/>
+          <ellipse cx="72" cy="60" rx="3.5" ry="5.5" fill="#1e293b"/>
+          <circle cx="70.5" cy="58" r="1.5" fill="#ffffff"/>
+          <!-- 웃는 입 -->
+          <path d="M52 70 Q60 78 68 70" stroke="#b45309" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <!-- 탐험가 셔츠 -->
+          <path d="M38 88 Q60 82 82 88 L88 114 Q60 118 32 114 Z" fill="#3b82f6"/>
+          <polygon points="56,86 64,86 60,98" fill="#f59e0b"/>
+          <!-- 반짝이 별 -->
+          <polygon points="105,24 108,32 116,35 108,38 105,46 102,38 94,35 102,32" fill="#fde047"/>
+        </svg>
+      </div>
+
+      <!-- 반/번호 필수 입력 폼 (이름 없음) -->
+      <section class="login-card" aria-labelledby="login-heading">
+        <h2 id="login-heading">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="8.5" cy="7" r="4"></circle>
+            <polyline points="17 11 19 13 23 9"></polyline>
+          </svg>
+          탐험가 등록 (반 · 번호 필수)
+        </h2>
+
+        <div class="input-row">
+          <div class="input-group">
+            <label for="input-class">반</label>
+            <div id="wrap-class" class="input-field-wrap">
+              <input type="number" id="input-class" class="num-input" min="1" max="99" placeholder="예: 3" inputmode="numeric">
+              <span class="unit-text">반</span>
+            </div>
+          </div>
+          <div class="input-group">
+            <label for="input-number">번호</label>
+            <div id="wrap-number" class="input-field-wrap">
+              <input type="number" id="input-number" class="num-input" min="1" max="99" placeholder="예: 12" inputmode="numeric">
+              <span class="unit-text">번</span>
+            </div>
+          </div>
+        </div>
+
+        <div id="input-error" class="error-msg" role="alert" aria-live="assertive"></div>
+
+        <button type="button" id="btn-start" class="btn-start-game">
+          <span>미로 탐험 시작하기!</span>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M8 5v14l11-7z"/>
+          </svg>
+        </button>
+
+        <p class="privacy-notice">
+          ※ 우리 학교의 학생 개인정보 보호를 위해 이름은 수집하지 않으며, 반과 번호만 학습 활동에 사용됩니다.
+        </p>
+      </section>
+
+      <!-- 게임 규칙 안내 -->
+      <aside class="rules-card">
+        <strong>🎮 탐험 규칙:</strong><br>
+        1. 방향키(↑↓←→)나 화면 조작 패드로 캐릭터를 이동해요.<br>
+        2. 잠긴 관문에 도착하면 저작권 퀴즈가 열려요.<br>
+        3. 정답을 맞히면 <strong>100점</strong>과 함께 연속 정답 <strong>콤보 보너스</strong>가 팡팡!<br>
+        4. 오답이라도 해설을 읽고 다시 도전하여 관문을 통과할 수 있어요.
+      </aside>
+    </main>
+
+    <!-- ==========================================================================
+         화면 2: 게임 플레이 (HUD + 미로 보드 + 조작 패드)
+         ========================================================================== */ -->
+    <main id="screen-game" class="screen" hidden>
+      <!-- 상단 게임 HUD -->
+      <section class="game-hud" aria-label="게임 진행 상태">
+        <div class="hud-chip">
+          <span class="hud-label">탐험가</span>
+          <span id="hud-student" class="hud-value">-</span>
+        </div>
+        <div class="hud-chip">
+          <span class="hud-label">관문 열쇠</span>
+          <span class="hud-value">
+            🔑 <span id="hud-gate-text">0 / 10</span>
+          </span>
+          <div class="progress-bar-container">
+            <div id="hud-progress-fill" class="progress-fill"></div>
+          </div>
+        </div>
+        <div class="hud-chip">
+          <span class="hud-label">현재 점수</span>
+          <span id="hud-score" class="hud-value hud-score">0점</span>
+        </div>
+        <div class="hud-chip">
+          <span class="hud-label">연속 정답</span>
+          <span id="hud-combo" class="hud-value hud-combo">0 COMBO</span>
+        </div>
+        <div class="hud-chip">
+          <span class="hud-label">등급 레벨</span>
+          <span id="hud-level" class="hud-value hud-level">Lv.1 탐험가</span>
+        </div>
+      </section>
+
+      <!-- 미로 보드 컨테이너 -->
+      <div class="maze-container">
+        <svg id="maze-svg" viewBox="0 0 750 550" preserveAspectRatio="xMidYMid meet">
+          <!-- 배경 그리드 타일 및 길 렌더링 영역 -->
+          <g id="maze-bg-layer"></g>
+          <!-- 관문 자물쇠 / 문 렌더링 영역 -->
+          <g id="maze-gates-layer"></g>
+          <!-- 플레이어 캐릭터 레이어 -->
+          <g id="maze-player-layer">
+            <g id="player-avatar" style="transition: transform 0.22s cubic-bezier(0.2, 0.9, 0.3, 1);">
+              <!-- 귀여운 캐릭터 SVG -->
+              <ellipse cx="25" cy="42" rx="14" ry="5" fill="rgba(0,0,0,0.35)"/>
+              <circle cx="25" cy="22" r="14" fill="#fed7aa"/>
+              <ellipse cx="25" cy="11" rx="20" ry="6" fill="#d97706"/>
+              <path d="M12 11 C12 0, 38 0, 38 11 Z" fill="#b45309"/>
+              <ellipse cx="20" cy="20" rx="2" ry="3" fill="#0f172a"/>
+              <ellipse cx="30" cy="20" rx="2" ry="3" fill="#0f172a"/>
+              <path d="M22 25 Q25 28 28 25" stroke="#b45309" stroke-width="1.8" fill="none"/>
+              <path d="M15 32 Q25 29 35 32 L38 43 Q25 45 12 43 Z" fill="#2563eb"/>
+            </g>
+          </g>
+        </svg>
+      </div>
+
+      <!-- 하단 조작 안내 & 가상 D-Pad -->
+      <section class="game-controls-section">
+        <div class="control-tip">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2L4 10h5v10h6V10h5L12 2z"/>
+          </svg>
+          방향키(↑↓←→) 또는 아래 버튼으로 이동하세요!
+        </div>
+
+        <div class="dpad-container" aria-label="화면 이동 조작 패드">
+          <button type="button" id="dpad-up" class="dpad-btn dpad-up" aria-label="위로 이동">▲</button>
+          <button type="button" id="dpad-left" class="dpad-btn dpad-left" aria-label="왼쪽으로 이동">◀</button>
+          <button type="button" id="dpad-down" class="dpad-btn dpad-down" aria-label="아래로 이동">▼</button>
+          <button type="button" id="dpad-right" class="dpad-btn dpad-right" aria-label="오른쪽으로 이동">▶</button>
+        </div>
+      </section>
+    </main>
+
+    <!-- ==========================================================================
+         화면 3: 관문 퀴즈 팝업 카드 (Modal)
+         ========================================================================== -->
+    <div id="modal-quiz" class="modal-backdrop" hidden role="dialog" aria-modal="true" aria-labelledby="modal-q-title">
+      <div class="quiz-card">
+        <div class="quiz-card-header">
+          <span id="modal-gate-badge" class="gate-badge">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+            </svg>
+            <span id="modal-gate-title">제 1 관문 저작권 퀴즈</span>
+          </span>
+          <span id="modal-hud-mini" class="quiz-stats-mini">점수: 0 | 콤보: 0</span>
+        </div>
+
+        <h3 id="modal-q-title" class="question-title">질문 내용이 여기에 들어갑니다.</h3>
+
+        <!-- 4지선다 보기 (데스크톱 2x2, 모바일 1열) -->
+        <div id="modal-options-grid" class="options-grid">
+          <!-- 자바스크립트로 동적 렌더링 -->
+        </div>
+
+        <!-- 정오답 피드백 영역 -->
+        <div id="modal-feedback-box" class="quiz-feedback-box" hidden>
+          <div class="fb-header">
+            <div id="fb-icon-container" class="fb-icon-wrap"></div>
+            <div class="fb-title-wrap">
+              <div id="fb-title-text" class="fb-title">정답입니다!</div>
+              <div id="fb-bonus-text" class="fb-bonus-text"></div>
+            </div>
+          </div>
+          <p id="fb-explanation" class="fb-desc">해설 내용이 여기에 들어갑니다.</p>
+          <button type="button" id="btn-feedback-action" class="btn-feedback-action">
+            계속하기
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==========================================================================
+         화면 4: 최종 결과 화면 (Result)
+         ========================================================================== -->
+    <main id="screen-result" class="screen" hidden>
+      <div class="result-card">
+        <!-- 황금 트로피 일러스트 -->
+        <div class="trophy-wrap">
+          <svg viewBox="0 0 100 100" width="100%" height="100%">
+            <ellipse cx="50" cy="88" rx="28" ry="6" fill="rgba(0,0,0,0.3)"/>
+            <rect x="36" y="74" width="28" height="12" rx="3" fill="#b45309"/>
+            <polygon points="44,74 56,74 54,58 46,58" fill="#d97706"/>
+            <!-- 컵 본체 -->
+            <path d="M28 20 L72 20 L66 52 C64 60 56 62 50 62 C44 62 36 60 34 52 Z" fill="#f59e0b"/>
+            <!-- 양쪽 손잡이 -->
+            <path d="M28 26 C16 26 16 42 28 44" stroke="#d97706" stroke-width="4" fill="none" stroke-linecap="round"/>
+            <path d="M72 26 C84 26 84 42 72 44" stroke="#d97706" stroke-width="4" fill="none" stroke-linecap="round"/>
+            <!-- 별 엠블럼 -->
+            <polygon points="50,28 53,37 62,37 55,43 57,52 50,47 43,52 45,43 38,37 47,37" fill="#fef08a"/>
+            <!-- 반짝임 -->
+            <polygon points="76,14 78,20 84,22 78,24 76,30 74,24 68,22 74,20" fill="#ffffff"/>
+          </svg>
+        </div>
+
+        <h2 class="result-title">미로 탈출 대성공!</h2>
+        <div id="result-student" class="result-student-tag">3반 12번 탐험가</div>
+
+        <!-- 스탯 대시보드 -->
+        <div class="stats-dashboard">
+          <div class="stat-box">
+            <span class="stat-title">최종 획득 점수</span>
+            <span id="result-score" class="stat-num stat-score">1,280점</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-title">정답률 (맞힌 개수)</span>
+            <span id="result-accuracy" class="stat-num stat-accuracy">90% (9/10)</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-title">최고 연속 콤보</span>
+            <span id="result-combo" class="stat-num stat-combo">6 COMBO</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-title">최종 탈출 등급</span>
+            <span id="result-grade" class="stat-num stat-grade">골드</span>
+          </div>
+        </div>
+
+        <!-- 구글 시트 전송 상태 박스 (URL 미설정 시 자동 숨김) -->
+        <div id="submission-status" class="network-status-box" hidden></div>
+
+        <!-- 액션 버튼 -->
+        <div class="result-btn-row">
+          <button type="button" id="btn-review" class="btn-result-action btn-review-wrong">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+            틀린 문제 다시 보기
+          </button>
+          <button type="button" id="btn-restart" class="btn-result-action btn-restart-game">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+              <path d="M3 3v5h5"/>
+            </svg>
+            처음부터 다시 하기
+          </button>
+        </div>
+      </div>
+    </main>
+
+    <!-- ==========================================================================
+         화면 5: 오답 복습 화면 (Review)
+         ========================================================================== -->
+    <main id="screen-review" class="screen" hidden>
+      <div class="review-header">
+        <h2 class="review-title">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+          </svg>
+          틀린 문제 다시 살펴보기
+        </h2>
+        <button type="button" id="btn-back-to-result" class="btn-back-result">
+          결과로 돌아가기
+        </button>
+      </div>
+
+      <div id="review-list-container" class="review-cards-list">
+        <!-- 오답 목록 자바스크립트 렌더링 -->
+      </div>
+    </main>
+  </div>
+
+  <!-- 필수 스크립트 로드 순서: questions.js -> submit.js -> index.html 인라인 제어 스크립트 -->
+  <script src="questions.js"></script>
+  <script src="submit.js"></script>
+
+  <script>
+    /* ==========================================================================
+       Web Audio API 사운드 신시사이저 (무음 기본, 온/오프 가능)
+       ========================================================================== */
+    const SoundFX = {
+      enabled: false,
+      ctx: null,
+
+      init: function() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) {
+            this.ctx = new AudioContext();
+          }
+        }
+      },
+
+      toggle: function() {
+        this.init();
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+        this.enabled = !this.enabled;
+        return this.enabled;
+      },
+
+      playStep: function() {
+        if (!this.enabled || !this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(180, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(80, this.ctx.currentTime + 0.06);
+        gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.06);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.06);
+      },
+
+      playCorrect: function() {
+        if (!this.enabled || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        const notes = [523.25, 659.25, 783.99, 1046.50]; // C, E, G, High C
+        notes.forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+          gain.gain.setValueAtTime(0.2, now + idx * 0.08);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.08 + 0.25);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now + idx * 0.08);
+          osc.stop(now + idx * 0.08 + 0.25);
+        });
+      },
+
+      playWrong: function() {
+        if (!this.enabled || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        const notes = [293.66, 246.94]; // D, B
+        notes.forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.12);
+          gain.gain.setValueAtTime(0.15, now + idx * 0.12);
+          gain.gain.linearRampToValueAtTime(0.01, now + idx * 0.12 + 0.2);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now + idx * 0.12);
+          osc.stop(now + idx * 0.12 + 0.2);
+        });
+      },
+
+      playWin: function() {
+        if (!this.enabled || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        const melody = [
+          { f: 523.25, d: 0.12 },
+          { f: 659.25, d: 0.12 },
+          { f: 783.99, d: 0.12 },
+          { f: 1046.50, d: 0.35 }
+        ];
+        let t = now;
+        melody.forEach(m => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(m.f, t);
+          gain.gain.setValueAtTime(0.25, t);
+          gain.gain.linearRampToValueAtTime(0.01, t + m.d);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(t);
+          osc.stop(t + m.d);
+          t += m.d + 0.04;
+        });
+      }
+    };
+
+    /* ==========================================================================
+       미로 맵 데이터 & 플레이어 이동 로직
+       Grid 크기: 15 cols x 11 rows (0: 벽, 1: 길, 101~110: Gate 1~10, 200: Start, 201: Goal)
+       ========================================================================== */
+    const MAZE_COLS = 15;
+    const MAZE_ROWS = 11;
+    const TILE_SIZE = 50; // SVG 픽셀 기준 (가로 750, 세로 550)
+
+    // 15x11 그리드 맵 정의
+    // 0: 벽, 1: 길, 101~110: Gate 1~10, 200: 출발지, 201: 도착지
+    const MAZE_GRID = [
+      [0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0, 0], // y=0 (외벽)
+      [0, 200,   1, 101,   1,   1,   1, 102,   1,   1,   1, 103,   1,   1, 0], // y=1: Gate 1, 2, 3
+      [0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   1, 0], // y=2: 하강 통로
+      [0,   1,   1, 106,   1,   1,   1, 105,   1,   1,   1, 104,   1,   1, 0], // y=3: Gate 6, 5, 4 (좌로 이동)
+      [0,   1,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0, 0], // y=4: 하강 통로
+      [0,   1,   1, 107,   1,   1,   1, 108,   1,   1,   1, 109,   1,   1, 0], // y=5: Gate 7, 8, 9 (우로 이동)
+      [0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   1, 0], // y=6: 하강 통로
+      [0,   1,   1,   1,   1,   1,   1,   1, 110,   1,   1,   1,   1,   1, 0], // y=7: Gate 10
+      [0,   1,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0, 0], // y=8: 하강 통로
+      [0,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1, 201, 0], // y=9: Goal (13, 9)
+      [0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0, 0]  // y=10 (외벽)
+    ];
+
+    // 관문 위치 매핑 (gateIndex: 0~9 -> {x, y, gateNum: 1~10})
+    const GATE_COORDS = [
+      { gateIndex: 0, x: 3,  y: 1, num: 1 },
+      { gateIndex: 1, x: 7,  y: 1, num: 2 },
+      { gateIndex: 2, x: 11, y: 1, num: 3 },
+      { gateIndex: 3, x: 11, y: 3, num: 4 },
+      { gateIndex: 4, x: 7,  y: 3, num: 5 },
+      { gateIndex: 5, x: 3,  y: 3, num: 6 },
+      { gateIndex: 6, x: 3,  y: 5, num: 7 },
+      { gateIndex: 7, x: 7,  y: 5, num: 8 },
+      { gateIndex: 8, x: 11, y: 5, num: 9 },
+      { gateIndex: 9, x: 8,  y: 7, num: 10 }
+    ];
+
+    const START_POS = { x: 1, y: 1 };
+    const GOAL_POS = { x: 13, y: 9 };
+
+    /* ==========================================================================
+       UI 컨트롤러 및 상태 관리
+       ========================================================================== */
+    const UI = {
+      currentScreen: 'intro', // intro | game | result | review
+      playerPos: { x: 1, y: 1 },
+      activeModalGateIndex: null,
+
+      elements: {
+        // 화면들
+        screenIntro: document.getElementById('screen-intro'),
+        screenGame: document.getElementById('screen-game'),
+        screenResult: document.getElementById('screen-result'),
+        screenReview: document.getElementById('screen-review'),
+        modalQuiz: document.getElementById('modal-quiz'),
+
+        // 인트로 입력 & 버튼
+        inputClass: document.getElementById('input-class'),
+        inputNumber: document.getElementById('input-number'),
+        wrapClass: document.getElementById('wrap-class'),
+        wrapNumber: document.getElementById('wrap-number'),
+        inputError: document.getElementById('input-error'),
+        btnStart: document.getElementById('btn-start'),
+
+        // 상단 바 & 사운드
+        btnSoundToggle: document.getElementById('btn-sound-toggle'),
+        soundIcon: document.getElementById('sound-icon'),
+        soundText: document.getElementById('sound-text'),
+
+        // 게임 HUD
+        hudStudent: document.getElementById('hud-student'),
+        hudGateText: document.getElementById('hud-gate-text'),
+        hudProgressFill: document.getElementById('hud-progress-fill'),
+        hudScore: document.getElementById('hud-score'),
+        hudCombo: document.getElementById('hud-combo'),
+        hudLevel: document.getElementById('hud-level'),
+
+        // 미로 레이어
+        mazeSvg: document.getElementById('maze-svg'),
+        mazeBgLayer: document.getElementById('maze-bg-layer'),
+        mazeGatesLayer: document.getElementById('maze-gates-layer'),
+        playerAvatar: document.getElementById('player-avatar'),
+
+        // D-Pad
+        dpadUp: document.getElementById('dpad-up'),
+        dpadDown: document.getElementById('dpad-down'),
+        dpadLeft: document.getElementById('dpad-left'),
+        dpadRight: document.getElementById('dpad-right'),
+
+        // 퀴즈 모달
+        modalGateTitle: document.getElementById('modal-gate-title'),
+        modalHudMini: document.getElementById('modal-hud-mini'),
+        modalQTitle: document.getElementById('modal-q-title'),
+        modalOptionsGrid: document.getElementById('modal-options-grid'),
+        modalFeedbackBox: document.getElementById('modal-feedback-box'),
+        fbIconContainer: document.getElementById('fb-icon-container'),
+        fbTitleText: document.getElementById('fb-title-text'),
+        fbBonusText: document.getElementById('fb-bonus-text'),
+        fbExplanation: document.getElementById('fb-explanation'),
+        btnFeedbackAction: document.getElementById('btn-feedback-action'),
+
+        // 결과 화면
+        resultStudent: document.getElementById('result-student'),
+        resultScore: document.getElementById('result-score'),
+        resultAccuracy: document.getElementById('result-accuracy'),
+        resultCombo: document.getElementById('result-combo'),
+        resultGrade: document.getElementById('result-grade'),
+        submissionStatus: document.getElementById('submission-status'),
+        btnReview: document.getElementById('btn-review'),
+        btnRestart: document.getElementById('btn-restart'),
+
+        // 오답 복습 화면
+        btnBackToResult: document.getElementById('btn-back-to-result'),
+        reviewListContainer: document.getElementById('review-list-container')
+      },
+
+      init: function() {
+        this.bindEvents();
+        this.renderMazeBase();
+        this.showScreen('intro');
+      },
+
+      /**
+       * 화면 전환 제어 (화면 겹침 방지: .screen[hidden])
+       */
+      showScreen: function(screenName) {
+        this.currentScreen = screenName;
+        this.elements.screenIntro.hidden = (screenName !== 'intro');
+        this.elements.screenGame.hidden = (screenName !== 'game');
+        this.elements.screenResult.hidden = (screenName !== 'result');
+        this.elements.screenReview.hidden = (screenName !== 'review');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      },
+
+      /**
+       * 이벤트 바인딩
+       */
+      bindEvents: function() {
+        // 사운드 토글
+        this.elements.btnSoundToggle.addEventListener('click', () => {
+          const isSoundOn = SoundFX.toggle();
+          this.elements.soundIcon.textContent = isSoundOn ? '🔊' : '🔇';
+          this.elements.soundText.textContent = isSoundOn ? '소리 켬' : '소리 끔';
+          this.elements.btnSoundToggle.classList.toggle('on', isSoundOn);
+        });
+
+        // 시작 버튼 클릭
+        this.elements.btnStart.addEventListener('click', () => {
+          this.handleStartGame();
+        });
+
+        // 반/번호 엔터키 입력 지원
+        const handleEnter = (e) => {
+          if (e.key === 'Enter') {
+            this.handleStartGame();
+          }
+        };
+        this.elements.inputClass.addEventListener('keydown', handleEnter);
+        this.elements.inputNumber.addEventListener('keydown', handleEnter);
+
+        // 입력 시 에러 표시 초기화
+        this.elements.inputClass.addEventListener('input', () => this.clearInputError());
+        this.elements.inputNumber.addEventListener('input', () => this.clearInputError());
+
+        // 키보드 방향키 이동
+        window.addEventListener('keydown', (e) => {
+          if (this.currentScreen !== 'game' || this.elements.modalQuiz.hidden === false) {
+            return;
+          }
+          switch (e.key) {
+            case 'ArrowUp':
+            case 'w':
+            case 'W':
+              e.preventDefault();
+              this.movePlayer(0, -1);
+              break;
+            case 'ArrowDown':
+            case 's':
+            case 'S':
+              e.preventDefault();
+              this.movePlayer(0, 1);
+              break;
+            case 'ArrowLeft':
+            case 'a':
+            case 'A':
+              e.preventDefault();
+              this.movePlayer(-1, 0);
+              break;
+            case 'ArrowRight':
+            case 'd':
+            case 'D':
+              e.preventDefault();
+              this.movePlayer(1, 0);
+              break;
+          }
+        });
+
+        // D-Pad 버튼 터치/클릭
+        this.elements.dpadUp.addEventListener('click', () => this.movePlayer(0, -1));
+        this.elements.dpadDown.addEventListener('click', () => this.movePlayer(0, 1));
+        this.elements.dpadLeft.addEventListener('click', () => this.movePlayer(-1, 0));
+        this.elements.dpadRight.addEventListener('click', () => this.movePlayer(1, 0));
+
+        // 미로 맵 직접 터치/클릭 이동 지원
+        this.elements.mazeSvg.addEventListener('click', (e) => {
+          if (this.currentScreen !== 'game' || this.elements.modalQuiz.hidden === false) return;
+          const rect = this.elements.mazeSvg.getBoundingClientRect();
+          const clickX = e.clientX - rect.left;
+          const clickY = e.clientY - rect.top;
+          const svgX = (clickX / rect.width) * (MAZE_COLS * TILE_SIZE);
+          const svgY = (clickY / rect.height) * (MAZE_ROWS * TILE_SIZE);
+          const targetCol = Math.floor(svgX / TILE_SIZE);
+          const targetRow = Math.floor(svgY / TILE_SIZE);
+
+          const dx = targetCol - this.playerPos.x;
+          const dy = targetRow - this.playerPos.y;
+
+          if (Math.abs(dx) + Math.abs(dy) === 1) {
+            this.movePlayer(dx, dy);
+          } else if (Math.abs(dx) >= Math.abs(dy) && dx !== 0) {
+            this.movePlayer(dx > 0 ? 1 : -1, 0);
+          } else if (dy !== 0) {
+            this.movePlayer(0, dy > 0 ? 1 : -1);
+          }
+        });
+
+        // 피드백 박스 버튼
+        this.elements.btnFeedbackAction.addEventListener('click', () => {
+          this.handleFeedbackAction();
+        });
+
+        // 결과 화면 액션
+        this.elements.btnReview.addEventListener('click', () => {
+          this.renderReviewScreen();
+        });
+
+        this.elements.btnRestart.addEventListener('click', () => {
+          this.handleRestartGame();
+        });
+
+        // 복습 화면에서 결과 화면으로 복귀
+        this.elements.btnBackToResult.addEventListener('click', () => {
+          this.showScreen('result');
+        });
+      },
+
+      clearInputError: function() {
+        this.elements.wrapClass.classList.remove('error');
+        this.elements.wrapNumber.classList.remove('error');
+        this.elements.inputError.textContent = '';
+      },
+
+      /**
+       * 게임 시작 처리 및 반·번호 유효성 검증
+       */
+      handleStartGame: function() {
+        this.clearInputError();
+        const classVal = this.elements.inputClass.value;
+        const numberVal = this.elements.inputNumber.value;
+
+        const validation = window.QuizEngine.validateStudentInfo(classVal, numberVal);
+        if (!validation.valid) {
+          this.elements.inputError.textContent = validation.message;
+          if (validation.field === 'class') {
+            this.elements.wrapClass.classList.add('error');
+            this.elements.inputClass.focus();
+          } else if (validation.field === 'number') {
+            this.elements.wrapNumber.classList.add('error');
+            this.elements.inputNumber.focus();
+          }
+          return;
+        }
+
+        // 검증 성공: 엔진 세션 저장
+        window.QuizEngine.setStudentInfo(validation.classNumber, validation.studentNumber);
+
+        // 플레이어 위치 초기화
+        this.playerPos = { x: START_POS.x, y: START_POS.y };
+        this.updatePlayerAvatarPos(false);
+
+        // HUD 및 게이트 렌더링
+        this.updateHUD();
+        this.renderGates();
+
+        // 화면 전환
+        this.showScreen('game');
+      },
+
+      /**
+       * 게임 HUD 업데이트
+       */
+      updateHUD: function() {
+        const studentLabel = window.QuizEngine.getStudentLabel();
+        this.elements.hudStudent.textContent = studentLabel || '-';
+
+        const passedCount = window.QuizEngine.gatePassed.filter(p => p).length;
+        const total = window.QuizEngine.totalQuestions;
+        this.elements.hudGateText.textContent = `${passedCount} / ${total}`;
+        const pct = Math.round((passedCount / total) * 100);
+        this.elements.hudProgressFill.style.width = `${pct}%`;
+
+        this.elements.hudScore.textContent = `${window.QuizEngine.score.toLocaleString()}점`;
+
+        const combo = window.QuizEngine.combo;
+        this.elements.hudCombo.textContent = `${combo} COMBO`;
+        if (combo >= 2) {
+          this.elements.hudCombo.classList.add('active');
+        } else {
+          this.elements.hudCombo.classList.remove('active');
+        }
+
+        const lvl = window.QuizEngine.getCurrentLevel();
+        this.elements.hudLevel.textContent = `${lvl.badge} ${lvl.name}`;
+      },
+
+      /**
+       * 미로 정적 타일 (벽, 길, 시작, 골) 렌더링
+       */
+      renderMazeBase: function() {
+        let html = '';
+        for (let r = 0; r < MAZE_ROWS; r++) {
+          for (let c = 0; c < MAZE_COLS; c++) {
+            const cell = MAZE_GRID[r][c];
+            const px = c * TILE_SIZE;
+            const py = r * TILE_SIZE;
+
+            if (cell === 0) {
+              // 벽 타일
+              html += `<rect x="${px}" y="${py}" width="${TILE_SIZE}" height="${TILE_SIZE}" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>`;
+              html += `<rect x="${px+4}" y="${py+4}" width="${TILE_SIZE-8}" height="${TILE_SIZE-8}" fill="#0f172a" rx="4"/>`;
+            } else {
+              // 길 타일
+              html += `<rect x="${px}" y="${py}" width="${TILE_SIZE}" height="${TILE_SIZE}" fill="#1b2a47" stroke="#253554" stroke-width="1"/>`;
+              // 잔디/포장 바닥 점 디테일
+              html += `<circle cx="${px+12}" cy="${py+12}" r="1.5" fill="#3b82f6" opacity="0.3"/>`;
+              html += `<circle cx="${px+36}" cy="${py+36}" r="1.5" fill="#3b82f6" opacity="0.3"/>`;
+            }
+
+            // 출발점 데코
+            if (cell === 200) {
+              html += `
+                <g transform="translate(${px+5}, ${py+5})">
+                  <rect x="0" y="0" width="40" height="40" rx="8" fill="#047857" opacity="0.8"/>
+                  <text x="20" y="25" text-anchor="middle" fill="#ffffff" font-size="11" font-weight="900">START</text>
+                </g>
+              `;
+            }
+
+            // 도착점 골 데코
+            if (cell === 201) {
+              html += `
+                <g transform="translate(${px+4}, ${py+4})">
+                  <rect x="0" y="0" width="42" height="42" rx="8" fill="#b45309" stroke="#f59e0b" stroke-width="2"/>
+                  <polygon points="21,8 24,17 33,17 26,22 28,31 21,26 14,31 16,22 9,17 18,17" fill="#fde047"/>
+                  <text x="21" y="38" text-anchor="middle" fill="#ffffff" font-size="9" font-weight="900">GOAL</text>
+                </g>
+              `;
+            }
+          }
+        }
+        this.elements.mazeBgLayer.innerHTML = html;
+      },
+
+      /**
+       * 관문 타일 (1~10번 문/열쇠) 렌더링
+       */
+      renderGates: function() {
+        let html = '';
+        GATE_COORDS.forEach((gate) => {
+          const px = gate.x * TILE_SIZE;
+          const py = gate.y * TILE_SIZE;
+          const isPassed = window.QuizEngine.gatePassed[gate.gateIndex];
+          const isNextActive = (!isPassed && (gate.gateIndex === 0 || window.QuizEngine.gatePassed[gate.gateIndex - 1]));
+
+          if (isPassed) {
+            // 통과한 관문: 초록색 열린 문 + 열쇠
+            html += `
+              <g transform="translate(${px}, ${py})">
+                <rect x="4" y="4" width="42" height="42" rx="8" fill="#065f46" stroke="#34d399" stroke-width="2"/>
+                <path d="M16 28 L22 34 L34 18" stroke="#34d399" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                <text x="25" y="14" text-anchor="middle" fill="#a7f3d0" font-size="10" font-weight="900">G${gate.num}</text>
+              </g>
+            `;
+          } else if (isNextActive) {
+            // 현재 도전해야 할 관문: 황금색 번쩍이는 잠긴 문
+            html += `
+              <g transform="translate(${px}, ${py})">
+                <rect x="4" y="4" width="42" height="42" rx="8" fill="#78350f" stroke="#fbbf24" stroke-width="2.5"/>
+                <!-- 황금 자물쇠 -->
+                <path d="M19 20 V15 C19 11.7 21.7 9 25 9 C28.3 9 31 11.7 31 15 V20" stroke="#fde047" stroke-width="3" fill="none"/>
+                <rect x="17" y="20" width="16" height="14" rx="3" fill="#f59e0b"/>
+                <circle cx="25" cy="26" r="2" fill="#78350f"/>
+                <text x="25" y="42" text-anchor="middle" fill="#fef08a" font-size="10" font-weight="900">G${gate.num}</text>
+              </g>
+            `;
+          } else {
+            // 아직 도달하지 못한 미개방 관문
+            html += `
+              <g transform="translate(${px}, ${py})">
+                <rect x="5" y="5" width="40" height="40" rx="6" fill="#334155" stroke="#64748b" stroke-width="1.5"/>
+                <rect x="18" y="20" width="14" height="12" rx="2" fill="#64748b"/>
+                <path d="M20 20 V16 C20 13.5 22 12 25 12 C28 12 30 13.5 30 16 V20" stroke="#64748b" stroke-width="2" fill="none"/>
+                <text x="25" y="41" text-anchor="middle" fill="#94a3b8" font-size="9" font-weight="800">G${gate.num}</text>
+              </g>
+            `;
+          }
+        });
+        this.elements.mazeGatesLayer.innerHTML = html;
+      },
+
+      /**
+       * 플레이어 아바타 위치 업데이트
+       */
+      updatePlayerAvatarPos: function(playAudio = true) {
+        const px = this.playerPos.x * TILE_SIZE;
+        const py = this.playerPos.y * TILE_SIZE;
+        this.elements.playerAvatar.style.transform = `translate(${px}px, ${py}px)`;
+        if (playAudio) {
+          SoundFX.playStep();
+        }
+      },
+
+      /**
+       * 플레이어 한 칸 이동 (dx, dy)
+       */
+      movePlayer: function(dx, dy) {
+        const nx = this.playerPos.x + dx;
+        const ny = this.playerPos.y + dy;
+
+        // 맵 범위 검사
+        if (nx < 0 || nx >= MAZE_COLS || ny < 0 || ny >= MAZE_ROWS) {
+          return;
+        }
+
+        const targetCell = MAZE_GRID[ny][nx];
+
+        // 벽(0) 충돌 차단
+        if (targetCell === 0) {
+          return;
+        }
+
+        // 게이트 타일인지 확인 (101~110)
+        if (targetCell >= 101 && targetCell <= 110) {
+          const gateIndex = targetCell - 101;
+          const isPassed = window.QuizEngine.gatePassed[gateIndex];
+
+          if (!isPassed) {
+            // 관문이 잠겨있는 경우: 퀴즈 모달 오픈!
+            this.openQuizModal(gateIndex);
+            return;
+          }
+        }
+
+        // 일반 길 or 이미 통과한 게이트 or 골인
+        this.playerPos.x = nx;
+        this.playerPos.y = ny;
+        this.updatePlayerAvatarPos(true);
+
+        // 최종 도착지(Goal) 도달 여부 확인
+        if (nx === GOAL_POS.x && ny === GOAL_POS.y) {
+          this.handleGoalReached();
+        }
+      },
+
+      /**
+       * 관문 퀴즈 모달 열기
+       */
+      openQuizModal: function(gateIndex) {
+        this.activeModalGateIndex = gateIndex;
+        const question = window.QUIZ_DATA.questions[gateIndex];
+        if (!question) return;
+
+        // 게이트 헤더 정보
+        this.elements.modalGateTitle.textContent = `제 ${gateIndex + 1} 관문 저작권 퀴즈`;
+        this.elements.modalHudMini.textContent = `점수: ${window.QuizEngine.score} | 콤보: ${window.QuizEngine.combo}`;
+
+        // 질문 텍스트
+        this.elements.modalQTitle.textContent = question.question;
+
+        // 보기 렌더링
+        const tags = ['A', 'B', 'C', 'D'];
+        const optClasses = ['opt-a', 'opt-b', 'opt-c', 'opt-d'];
+        let optionsHtml = '';
+        question.options.forEach((optText, idx) => {
+          optionsHtml += `
+            <button type="button" class="option-btn ${optClasses[idx]}" data-index="${idx}">
+              <span class="option-tag">${tags[idx]}</span>
+              <span class="option-content">${optText}</span>
+            </button>
+          `;
+        });
+        this.elements.modalOptionsGrid.innerHTML = optionsHtml;
+
+        // 보기 버튼 이벤트 바인딩
+        const optButtons = this.elements.modalOptionsGrid.querySelectorAll('.option-btn');
+        optButtons.forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const selectedIdx = parseInt(btn.getAttribute('data-index'), 10);
+            this.handleOptionSelect(selectedIdx, btn, optButtons);
+          });
+        });
+
+        // 피드백 박스 숨김 초기화
+        this.elements.modalFeedbackBox.hidden = true;
+
+        // 모달 표시
+        this.elements.modalQuiz.hidden = false;
+      },
+
+      /**
+       * 퀴즈 보기 선택 처리
+       */
+      handleOptionSelect: function(selectedIdx, clickedBtn, allButtons) {
+        // 중복 클릭 방지 (모든 보기 비활성화)
+        allButtons.forEach(btn => btn.disabled = true);
+
+        const gateIndex = this.activeModalGateIndex;
+        const result = window.QuizEngine.submitGateAnswer(gateIndex, selectedIdx);
+
+        // 시각적 정오답 표시
+        if (result.isCorrect) {
+          clickedBtn.classList.add('selected-correct');
+          SoundFX.playCorrect();
+        } else {
+          clickedBtn.classList.add('selected-wrong');
+          // 올바른 정답 버튼도 살짝 표시
+          allButtons[result.correctAnswerIndex].classList.add('selected-correct');
+          SoundFX.playWrong();
+        }
+
+        // 피드백 박스 표시
+        this.showQuizFeedback(result);
+        this.updateHUD();
+        this.renderGates();
+      },
+
+      /**
+       * 퀴즈 정오답 피드백 표시
+       */
+      showQuizFeedback: function(result) {
+        const fb = this.elements.modalFeedbackBox;
+        fb.hidden = false;
+        fb.className = 'quiz-feedback-box ' + (result.isCorrect ? 'correct' : 'wrong');
+
+        if (result.isCorrect) {
+          // 정답 환호 마스코트 아이콘
+          this.elements.fbIconContainer.innerHTML = `
+            <svg viewBox="0 0 50 50" width="100%" height="100%">
+              <circle cx="25" cy="25" r="22" fill="#10b981"/>
+              <path d="M15 25 L22 32 L35 18" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            </svg>
+          `;
+          this.elements.fbTitleText.textContent = '관문 통과! 정답입니다! 🎉';
+          
+          if (result.isFirstAttempt) {
+            let bonusStr = `+100점 획득!`;
+            if (result.bonusPoints > 0) {
+              bonusStr += ` (연속 정답 콤보 보너스 +${result.bonusPoints}점!)`;
+            }
+            this.elements.fbBonusText.textContent = bonusStr;
+          } else {
+            this.elements.fbBonusText.textContent = '다시 도전하여 관문을 열었습니다!';
+          }
+
+          this.elements.btnFeedbackAction.className = 'btn-feedback-action next';
+          this.elements.btnFeedbackAction.textContent = '열쇠를 얻고 다음 길로 가기 ➔';
+        } else {
+          // 오답 격려 마스코트 아이콘
+          this.elements.fbIconContainer.innerHTML = `
+            <svg viewBox="0 0 50 50" width="100%" height="100%">
+              <circle cx="25" cy="25" r="22" fill="#ef4444"/>
+              <line x1="17" y1="17" x2="33" y2="33" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
+              <line x1="33" y1="17" x2="17" y2="33" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
+            </svg>
+          `;
+          this.elements.fbTitleText.textContent = '괜찮아! 해설을 확인하고 다시 풀어보자 💡';
+          this.elements.fbBonusText.textContent = '감점은 없어요! 해설을 읽고 다시 통과해보세요.';
+          this.elements.btnFeedbackAction.className = 'btn-feedback-action retry';
+          this.elements.btnFeedbackAction.textContent = '해설 확인 후 다시 도전하기 ↻';
+        }
+
+        this.elements.fbExplanation.textContent = result.explanation;
+        this.elements.modalFeedbackBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      },
+
+      /**
+       * 피드백 박스 버튼 클릭 처리
+       */
+      handleFeedbackAction: function() {
+        const gateIndex = this.activeModalGateIndex;
+        const isPassed = window.QuizEngine.gatePassed[gateIndex];
+
+        if (isPassed) {
+          // 관문 통과: 모달 닫고 플레이어가 게이트 칸으로 진입
+          this.elements.modalQuiz.hidden = true;
+          const targetGate = GATE_COORDS[gateIndex];
+          this.playerPos.x = targetGate.x;
+          this.playerPos.y = targetGate.y;
+          this.updatePlayerAvatarPos(true);
+          this.renderGates();
+        } else {
+          // 오답 재도전: 모달 내에서 문제 다시 풀 수 있도록 버튼 재활성화
+          this.openQuizModal(gateIndex);
+        }
+      },
+
+      /**
+       * 최종 탈출 성공 (Goal 도달)
+       */
+      handleGoalReached: function() {
+        SoundFX.playWin();
+
+        const payload = window.QuizEngine.buildSubmissionPayload();
+        if (!payload) return;
+
+        // 결과 화면 데이터 바인딩
+        this.elements.resultStudent.textContent = `${payload.classNumber}반 ${payload.studentNumber}번 챔피언`;
+        this.elements.resultScore.textContent = `${payload.score.toLocaleString()}점`;
+        this.elements.resultAccuracy.textContent = `${payload.accuracy}% (${payload.correctCount}/${payload.totalQuestions})`;
+        this.elements.resultCombo.textContent = `${payload.maxCombo} COMBO`;
+        this.elements.resultGrade.textContent = payload.grade;
+
+        // 네트워크 전송 처리 (SUBMISSION_ENDPOINT 확인)
+        const statusBox = this.elements.submissionStatus;
+        statusBox.hidden = true;
+        statusBox.textContent = '';
+
+        window.QuizEngine.sendSubmission((status, message) => {
+          statusBox.hidden = false;
+          statusBox.className = 'network-status-box ' + status;
+          statusBox.textContent = message;
+        });
+
+        // 결과 화면으로 전환
+        this.showScreen('result');
+      },
+
+      /**
+       * 오답 복습 화면 렌더링
+       */
+      renderReviewScreen: function() {
+        const questions = window.QUIZ_DATA.questions;
+        const answers = window.QuizEngine.answers;
+        const wrongItems = [];
+
+        answers.forEach((ans, idx) => {
+          if (!ans.isCorrect) {
+            wrongItems.push({
+              question: questions[idx],
+              ans: ans,
+              qNum: idx + 1
+            });
+          }
+        });
+
+        if (wrongItems.length === 0) {
+          alert('축하합니다! 모든 10문항을 첫 시도에 완벽하게 맞혔어요! 🌟');
+          return;
+        }
+
+        let html = '';
+        wrongItems.forEach(item => {
+          const q = item.question;
+          const userChoiceText = q.options[item.ans.selectedIndex] || '선택 없음';
+          const correctChoiceText = q.options[q.answer];
+
+          html += `
+            <div class="review-item">
+              <span class="rev-q-num">제 ${item.qNum} 관문 문제</span>
+              <h4 class="rev-q-text">${q.question}</h4>
+              <div class="rev-answers-box">
+                <div class="rev-user-ans">❌ 내가 골랐던 답: ${userChoiceText}</div>
+                <div class="rev-correct-ans">⭕ 올바른 정답: ${correctChoiceText}</div>
+              </div>
+              <div class="rev-expl">💡 <strong>해설:</strong> ${q.explanation}</div>
+            </div>
+          `;
+        });
+
+        this.elements.reviewListContainer.innerHTML = html;
+        this.showScreen('review');
+      },
+
+      /**
+       * 처음부터 다시 하기 (반·번호 및 점수 세션 완전 초기화)
+       */
+      handleRestartGame: function() {
+        // 공용 기기 사용을 고려하여 반/번호 포함 전체 리셋
+        window.QuizEngine.resetGame();
+        this.elements.inputClass.value = '';
+        this.elements.inputNumber.value = '';
+        this.clearInputError();
+        this.elements.submissionStatus.hidden = true;
+        this.elements.modalQuiz.hidden = true;
+
+        this.playerPos = { x: START_POS.x, y: START_POS.y };
+        this.renderGates();
+        this.showScreen('intro');
+        this.elements.inputClass.focus();
+      }
+    };
+
+    // DOM 로드 완료 후 UI 초기화
+    document.addEventListener('DOMContentLoaded', () => {
+      UI.init();
+    });
+  </script>
+</body>
+</html>
